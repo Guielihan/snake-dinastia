@@ -10,120 +10,42 @@ interface SnakeGameProps {
   toggleTheme: () => void;
 }
 
-  return (
-    <div className="flex flex-col items-center min-h-screen w-full bg-gray-100 dark:bg-[#0a0a0f] text-gray-900 dark:text-gray-100 p-4 overflow-hidden touch-none select-none font-sans transition-colors duration-300">
-      {/* Voltar para tela inicial */}
-      <div className="w-full flex justify-start" style={{ width: 'min(90vw, 500px)' }}>
-        <button
-          className="inline-flex items-center justify-center mt-2 ml-2 w-9 h-9 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 shadow"
-          title="Voltar para início"
-          onClick={onLogout}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: 24 }}>arrow_back_ios_new</span>
-        </button>
-      </div>
-      {/* Header */}
-      <header 
-        className="flex justify-between items-center mb-4 bg-white/80 dark:bg-gray-900/80 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xl backdrop-blur-md transition-colors duration-300"
-        style={{ width: 'min(90vw, 500px)' }}
-      >
-        <div className="flex-1 min-w-0 mr-2">
-          <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Jogador</h2>
-          <div className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-cyan-500 dark:from-green-400 dark:to-cyan-400 text-sm md:text-lg leading-tight truncate">
-            {user.nickname}
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
-          {/* Theme Toggle in Header */}
-          <button 
-            onClick={toggleTheme}
-            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors hidden xs:block"
-          >
-             {isDarkMode ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-             ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-             )}
-          </button>
+// TODO: Adicione aqui todos os hooks, funções e o corpo do componente que estavam fora da função.
+export const SnakeGame: React.FC<SnakeGameProps> = ({ user, onLogout, isDarkMode, toggleTheme }) => {
+  // Estados e refs principais
+  const [snake, setSnake] = useState<Coordinate[]>([
+    { x: 10, y: 10 },
+    { x: 9, y: 10 },
+    { x: 8, y: 10 },
+  ]);
+  const [food, setFood] = useState<Coordinate>(getRandomCoordinate([{ x: 10, y: 10 }]));
+  const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(() => Number(localStorage.getItem('snake_highscore')) || 0);
+  const [status, setStatus] = useState<GameStatus>(GameStatus.IDLE);
+  const [isPaused, setIsPaused] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
+  const [countdown, setCountdown] = useState(3);
+  const [particles, setParticles] = useState<any[]>([]);
+  const [shake, setShake] = useState(false);
+  const currentDirection = useRef(Direction.RIGHT);
+  const lastProcessedDirection = useRef(Direction.RIGHT);
+  const moveQueue = useRef<Direction[]>([]);
 
-          <div className="text-right hidden sm:block">
-            <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Recorde</h2>
-            <div className="font-bold text-xl font-mono text-yellow-600 dark:text-yellow-500 drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]">{highScore}</div>
-          </div>
-          <div className="text-right hidden sm:block">
-            <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Pontos</h2>
-            <div className="font-bold text-xl font-mono text-green-600 dark:text-green-400 drop-shadow-[0_0_5px_rgba(34,197,94,0.5)]">{score}</div>
-          </div>
-          <button
-            onClick={() => setIsPaused(p => !p)}
-            className="ml-2 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            title={isPaused ? 'Continuar' : 'Pausar'}
-          >
-            {isPaused ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-            )}
-          </button>
-        </div>
-      </header>
-  const lastProcessedDirection = useRef<Direction>(Direction.RIGHT); 
+  // Config de dificuldade
+  const DIFFICULTY_CONFIG = {
+    facil: { label: 'Fácil', desc: 'Para iniciantes', color: 'border-green-400 text-green-600', baseSpeed: 200, speedMultiplier: 2 },
+    normal: { label: 'Normal', desc: 'Desafio padrão', color: 'border-blue-400 text-blue-600', baseSpeed: 120, speedMultiplier: 3 },
+    dificil: { label: 'Difícil', desc: 'Só para brabos', color: 'border-red-400 text-red-600', baseSpeed: 80, speedMultiplier: 4 },
+  };
 
-  // Initialize
-  useEffect(() => {
-    const initData = async () => {
-      const stored = localStorage.getItem('snake_highscore');
-      if (stored) setHighScore(parseInt(stored, 10));
-    };
-    initData();
-  }, []); 
-
-  // Countdown Logic
-  useEffect(() => {
-    if (status === GameStatus.COUNTDOWN) {
-      const interval = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            playSound.start();
-            setStatus(GameStatus.PLAYING);
-            return 3;
-          }
-          playSound.countdown();
-          return prev - 1;
-        });
-      }, 800);
-      return () => clearInterval(interval);
-    }
-  }, [status]);
-
-  // Particle Loop
-  useEffect(() => {
-    let animationFrame: number;
-    if (particles.length > 0) {
-      const updateParticles = () => {
-        setParticles(prev => prev.map(p => ({
-          ...p,
-          x: p.x + p.vx,
-          y: p.y + p.vy,
-          life: p.life - 0.05
-        })).filter(p => p.life > 0));
-        animationFrame = requestAnimationFrame(updateParticles);
-      };
-      animationFrame = requestAnimationFrame(updateParticles);
-    }
-    return () => cancelAnimationFrame(animationFrame);
-  }, [particles.length]);
-
+  // Funções principais
   const startCountdown = () => {
     setSnake([{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }]);
     setFood(getRandomCoordinate([{ x: 10, y: 10 }]));
-    
     currentDirection.current = Direction.RIGHT;
     lastProcessedDirection.current = Direction.RIGHT;
     moveQueue.current = [];
     setParticles([]);
-    
     setScore(0);
     setIsPaused(false);
     setCountdown(3);
@@ -132,12 +54,12 @@ interface SnakeGameProps {
   };
 
   const spawnParticles = (x: number, y: number, color: string) => {
-    const newParticles: Particle[] = [];
+    const newParticles: any[] = [];
     for (let i = 0; i < 8; i++) {
       const angle = (Math.PI * 2 * i) / 8;
       newParticles.push({
         id: Math.random(),
-        x: x * 100 + 50, 
+        x: x * 100 + 50,
         y: y * 100 + 50,
         vx: Math.cos(angle) * 0.5,
         vy: Math.sin(angle) * 0.5,
@@ -158,7 +80,6 @@ interface SnakeGameProps {
     playSound.die();
     setShake(true);
     setTimeout(() => setShake(false), 500);
-    
     setStatus(GameStatus.GAME_OVER);
     if (score > highScore) {
       setHighScore(score);
@@ -179,7 +100,6 @@ interface SnakeGameProps {
     const lastScheduled = moveQueue.current.length > 0 
       ? moveQueue.current[moveQueue.current.length - 1] 
       : lastProcessedDirection.current;
-
     if (isValidTurn(lastScheduled, newDir)) {
       if (moveQueue.current.length < 3) {
         moveQueue.current.push(newDir);
@@ -193,9 +113,7 @@ interface SnakeGameProps {
       if (status === GameStatus.PLAYING) togglePause();
       return;
     }
-
     if (status !== GameStatus.PLAYING || isPaused) return;
-
     switch (e.key) {
       case 'ArrowUp': queueMove(Direction.UP); break;
       case 'ArrowDown': queueMove(Direction.DOWN); break;
@@ -215,12 +133,10 @@ interface SnakeGameProps {
 
   const moveSnake = () => {
     if (isPaused) return;
-
     if (moveQueue.current.length > 0) {
       currentDirection.current = moveQueue.current.shift() as Direction;
     }
     lastProcessedDirection.current = currentDirection.current;
-
     const head = { ...snake[0] };
     switch (currentDirection.current) {
       case Direction.UP: head.y -= 1; break;
@@ -228,14 +144,11 @@ interface SnakeGameProps {
       case Direction.LEFT: head.x -= 1; break;
       case Direction.RIGHT: head.x += 1; break;
     }
-
     if (checkCollision(head, snake)) {
       gameOver();
       return;
     }
-
     const newSnake = [head, ...snake];
-    
     if (head.x === food.x && head.y === food.y) {
       playSound.eat();
       setScore(s => s + 1);
@@ -244,46 +157,56 @@ interface SnakeGameProps {
     } else {
       newSnake.pop();
     }
-
     setSnake(newSnake);
   };
 
+  // Hook customizado para intervalos
+  function useInterval(callback: () => void, delay: number | null) {
+    const savedCallback = useRef<() => void>();
+    useEffect(() => { savedCallback.current = callback; }, [callback]);
+    useEffect(() => {
+      if (delay === null) return;
+      const id = setInterval(() => savedCallback.current && savedCallback.current(), delay);
+      return () => clearInterval(id);
+    }, [delay]);
+  }
+
   const config = DIFFICULTY_CONFIG[difficulty];
   const calculatedSpeed = Math.max(50, config.baseSpeed - (score * config.speedMultiplier));
-  
-  useInterval(
-    moveSnake, 
-    (status === GameStatus.PLAYING && !isPaused) ? calculatedSpeed : null
-  );
+  useInterval(moveSnake, (status === GameStatus.PLAYING && !isPaused) ? calculatedSpeed : null);
 
+  // Countdown
+  useEffect(() => {
+    if (status === GameStatus.COUNTDOWN && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (status === GameStatus.COUNTDOWN && countdown === 0) {
+      setStatus(GameStatus.PLAYING);
+    }
+  }, [status, countdown]);
+
+  // Partículas
+  useInterval(() => {
+    setParticles(prev => prev.filter(p => p.life > 0.1).map(p => ({ ...p, x: p.x + p.vx * 10, y: p.y + p.vy * 10, life: p.life * 0.85 })));
+  }, 40);
+
+  // Renderização principal
   return (
     <div className="flex flex-col items-center min-h-screen w-full bg-gray-100 dark:bg-[#0a0a0f] text-gray-900 dark:text-gray-100 p-4 overflow-hidden touch-none select-none font-sans transition-colors duration-300">
-      
       {/* Header */}
-      <header 
-        className="flex justify-between items-center mb-4 bg-white/80 dark:bg-gray-900/80 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xl backdrop-blur-md transition-colors duration-300"
-        style={{ width: 'min(90vw, 500px)' }}
-      >
+      <header className="flex justify-between items-center mb-4 bg-white/80 dark:bg-gray-900/80 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xl backdrop-blur-md transition-colors duration-300" style={{ width: 'min(90vw, 500px)' }}>
         <div className="flex-1 min-w-0 mr-2">
           <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Jogador</h2>
-          <div className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-cyan-500 dark:from-green-400 dark:to-cyan-400 text-sm md:text-lg leading-tight truncate">
-            {user.nickname}
-          </div>
+          <div className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-cyan-500 dark:from-green-400 dark:to-cyan-400 text-sm md:text-lg leading-tight truncate">{user.nickname}</div>
         </div>
-        
         <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
-          {/* Theme Toggle in Header */}
-          <button 
-            onClick={toggleTheme}
-            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors hidden xs:block"
-          >
-             {isDarkMode ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-             ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-             )}
+          <button onClick={toggleTheme} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors hidden xs:block">
+            {isDarkMode ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            )}
           </button>
-
           <div className="text-right hidden sm:block">
             <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Recorde</h2>
             <div className="font-bold text-xl font-mono text-yellow-600 dark:text-yellow-500 drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]">{highScore}</div>
@@ -292,110 +215,19 @@ interface SnakeGameProps {
             <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Pontos</h2>
             <div className="font-bold text-xl font-mono text-gray-800 dark:text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">{score}</div>
           </div>
-          
-          <button 
-            onClick={togglePause}
-            className={`ml-1 p-3 rounded-lg border transition-all active:scale-95 shadow-md ${
-              isPaused 
-              ? 'bg-yellow-100 dark:bg-yellow-500/20 border-yellow-400 dark:border-yellow-500 text-yellow-600 dark:text-yellow-400' 
-              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-            disabled={status !== GameStatus.PLAYING}
-          >
+          <button onClick={togglePause} className={`ml-1 p-3 rounded-lg border transition-all active:scale-95 shadow-md ${isPaused ? 'bg-yellow-100 dark:bg-yellow-500/20 border-yellow-400 dark:border-yellow-500 text-yellow-600 dark:text-yellow-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'}`} disabled={status !== GameStatus.PLAYING}>
             {isPaused ? (
-              // Play Icon (Resume)
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             ) : (
-              // Pause Icon
-              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                 <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-              </svg>
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             )}
           </button>
         </div>
       </header>
-
-      {/* Game Board Container */}
-      <div 
-        className={`relative bg-gray-200 dark:bg-gray-900 rounded-xl border-4 ${shake ? 'border-red-500 translate-x-1' : 'border-gray-300 dark:border-gray-800'} shadow-2xl overflow-hidden touch-none transition-all duration-300`}
-        style={{
-          width: 'min(90vw, 500px)',
-          height: 'min(90vw, 500px)',
-          boxShadow: isDarkMode ? '0 0 40px rgba(0,0,0,0.6)' : '0 10px 30px rgba(0,0,0,0.1)'
-        }}
-      >
-        {/* Game Grid */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
-            gridTemplateRows: `repeat(${GRID_SIZE}, 1fr)`,
-          }}
-        >
-          {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, i) => {
-            const x = i % GRID_SIZE;
-            const y = Math.floor(i / GRID_SIZE);
-            const isFood = food.x === x && food.y === y;
-            const isSnakeHead = snake[0].x === x && snake[0].y === y;
-            const isSnakeBody = snake.some((s, idx) => idx !== 0 && s.x === x && s.y === y);
-
-            return (
-              <div key={i} className="relative w-full h-full">
-                {/* Subtle Grid Lines */}
-                <div className="absolute inset-0 border-[0.5px] border-gray-300/50 dark:border-gray-800/30"></div>
-
-                {isFood && (
-                  <div className="absolute inset-1.5 bg-red-500 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-pulse">
-                     <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-white rounded-full opacity-50"></div>
-                  </div>
-                )}
-                
-                {isSnakeHead && (
-                  <div className="absolute inset-0.5 bg-green-500 dark:bg-green-400 rounded-sm z-10 shadow-[0_0_15px_rgba(74,222,128,0.6)]">
-                    <div className="absolute top-[20%] right-[20%] w-[20%] h-[20%] bg-black/80 rounded-full" />
-                    <div className="absolute top-[20%] left-[20%] w-[20%] h-[20%] bg-black/80 rounded-full" />
-                  </div>
-                )}
-                
-                {isSnakeBody && (
-                  <div className="absolute inset-0.5 bg-green-700 dark:bg-green-600 rounded-sm opacity-90 shadow-inner" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Particles Overlay */}
-        {particles.map((p) => (
-           <div 
-             key={p.id}
-             className="absolute w-2 h-2 rounded-full pointer-events-none"
-             style={{
-                backgroundColor: p.color,
-                left: `${(p.x / GRID_SIZE)}%`, // Simplified projection
-                top: `${(p.y / GRID_SIZE)}%`,
-                opacity: p.life,
-                transform: 'translate(-50%, -50%)'
-             }}
-           />
-        ))}
-
-        {/* --- OVERLAYS --- */}
-
-        {/* IDLE */}
-        {status === GameStatus.IDLE && (
-          <div className="absolute inset-0 z-30 bg-white/80 dark:bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 transition-colors duration-300">
-            <h3 className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-cyan-500 dark:from-green-400 dark:to-cyan-400 font-bold mb-6 tracking-[0.2em] uppercase text-sm">Dificuldade</h3>
-            <div className="grid grid-cols-2 gap-3 w-full max-w-xs mb-8">
-              {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map((diff) => (
-                <button
-                  key={diff}
-                  onClick={() => setDifficulty(diff)}
-                  className={`p-3 rounded-lg border transition-all text-left group relative overflow-hidden ${
-                    difficulty === diff 
+      {/* ...existing code... */}
+    </div>
+  );
+};
                       ? `${DIFFICULTY_CONFIG[diff].color} bg-gray-100 dark:bg-gray-900 shadow-lg` 
                       : 'border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-white dark:hover:bg-gray-800'
                   }`}
@@ -476,4 +308,4 @@ interface SnakeGameProps {
       </div>
     </div>
   );
-};
+}
