@@ -10,55 +10,64 @@ interface SnakeGameProps {
   toggleTheme: () => void;
 }
 
-interface Particle {
-  id: number;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  color: string;
-}
+  return (
+    <div className="flex flex-col items-center min-h-screen w-full bg-gray-100 dark:bg-[#0a0a0f] text-gray-900 dark:text-gray-100 p-4 overflow-hidden touch-none select-none font-sans transition-colors duration-300">
+      {/* Voltar para tela inicial */}
+      <div className="w-full flex justify-start" style={{ width: 'min(90vw, 500px)' }}>
+        <button
+          className="inline-flex items-center justify-center mt-2 ml-2 w-9 h-9 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-700 shadow"
+          title="Voltar para início"
+          onClick={onLogout}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 24 }}>arrow_back_ios_new</span>
+        </button>
+      </div>
+      {/* Header */}
+      <header 
+        className="flex justify-between items-center mb-4 bg-white/80 dark:bg-gray-900/80 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xl backdrop-blur-md transition-colors duration-300"
+        style={{ width: 'min(90vw, 500px)' }}
+      >
+        <div className="flex-1 min-w-0 mr-2">
+          <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Jogador</h2>
+          <div className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-cyan-500 dark:from-green-400 dark:to-cyan-400 text-sm md:text-lg leading-tight truncate">
+            {user.nickname}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
+          {/* Theme Toggle in Header */}
+          <button 
+            onClick={toggleTheme}
+            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors hidden xs:block"
+          >
+             {isDarkMode ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+             ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+             )}
+          </button>
 
-// Hook for game loop interval
-function useInterval(callback: () => void, delay: number | null) {
-  const savedCallback = useRef(callback);
-  useEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
-  useEffect(() => {
-    if (delay !== null) {
-      const id = setInterval(() => savedCallback.current(), delay);
-      return () => clearInterval(id);
-    }
-  }, [delay]);
-}
-
-const DIFFICULTY_CONFIG = {
-  [Difficulty.EASY]: { label: 'Fácil', desc: 'Lento e relaxante', baseSpeed: 200, speedMultiplier: 0, color: 'text-green-500 dark:text-green-400 border-green-500' },
-  [Difficulty.MEDIUM]: { label: 'Médio', desc: 'Acelera gradualmente', baseSpeed: 150, speedMultiplier: 2, color: 'text-cyan-500 dark:text-cyan-400 border-cyan-500' },
-  [Difficulty.HARD]: { label: 'Difícil', desc: 'Rápido desde o início', baseSpeed: 100, speedMultiplier: 4, color: 'text-purple-500 dark:text-purple-400 border-purple-600' },
-  [Difficulty.EXTREME]: { label: 'Extremo', desc: 'Velocidade insana', baseSpeed: 60, speedMultiplier: 5, color: 'text-red-600 dark:text-red-500 border-red-600' },
-};
-
-export const SnakeGame: React.FC<SnakeGameProps> = ({ user, onLogout, isDarkMode, toggleTheme }) => {
-  // Game State
-  const [snake, setSnake] = useState<Coordinate[]>([{ x: 10, y: 10 }]);
-  const [food, setFood] = useState<Coordinate>({ x: 5, y: 5 });
-  const [status, setStatus] = useState<GameStatus>(GameStatus.IDLE);
-  const [score, setScore] = useState(0);
-  const [highScore, setHighScore] = useState(0);
-  const [difficulty, setDifficulty] = useState<Difficulty>(Difficulty.MEDIUM);
-  const [isPaused, setIsPaused] = useState(false);
-  
-  // Animation States
-  const [countdown, setCountdown] = useState(3);
-  const [shake, setShake] = useState(false);
-  const [particles, setParticles] = useState<Particle[]>([]);
-  
-  // Movement Refs
-  const moveQueue = useRef<Direction[]>([]);
-  const currentDirection = useRef<Direction>(Direction.RIGHT); 
+          <div className="text-right hidden sm:block">
+            <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Recorde</h2>
+            <div className="font-bold text-xl font-mono text-yellow-600 dark:text-yellow-500 drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]">{highScore}</div>
+          </div>
+          <div className="text-right hidden sm:block">
+            <h2 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Pontos</h2>
+            <div className="font-bold text-xl font-mono text-green-600 dark:text-green-400 drop-shadow-[0_0_5px_rgba(34,197,94,0.5)]">{score}</div>
+          </div>
+          <button
+            onClick={() => setIsPaused(p => !p)}
+            className="ml-2 p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            title={isPaused ? 'Continuar' : 'Pausar'}
+          >
+            {isPaused ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+            )}
+          </button>
+        </div>
+      </header>
   const lastProcessedDirection = useRef<Direction>(Direction.RIGHT); 
 
   // Initialize
