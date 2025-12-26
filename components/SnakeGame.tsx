@@ -12,6 +12,15 @@ interface SnakeGameProps {
 
 // TODO: Adicione aqui todos os hooks, funções e o corpo do componente que estavam fora da função.
 export const SnakeGame: React.FC<SnakeGameProps> = ({ user, onLogout, isDarkMode, toggleTheme }) => {
+    // Salva score no ranking localStorage após GAME_OVER
+    useEffect(() => {
+      if (status === GameStatus.GAME_OVER) {
+        const ranking = JSON.parse(localStorage.getItem('ranking') || '[]');
+        ranking.push({ nickname: user.nickname, score });
+        ranking.sort((a, b) => b.score - a.score);
+        localStorage.setItem('ranking', JSON.stringify(ranking.slice(0, 10)));
+      }
+    }, [status]);
   // Estados e refs principais
   const [snake, setSnake] = useState<Coordinate[]>([
     { x: 10, y: 10 },
@@ -224,37 +233,32 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ user, onLogout, isDarkMode
           </button>
         </div>
       </header>
-      {/* ...existing code... */}
-    </div>
-  );
-};
 
-        {/* PAUSE */}
-        {status === GameStatus.PLAYING && isPaused && (
-          <div className="absolute inset-0 z-30 bg-white/40 dark:bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
-            <div className="text-4xl font-black text-gray-900 dark:text-white tracking-widest pixel-font animate-pulse drop-shadow-lg">
-              PAUSE
-            </div>
+      {/* PAUSE */}
+      {status === GameStatus.PLAYING && isPaused && (
+        <div className="absolute inset-0 z-30 bg-white/40 dark:bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="text-4xl font-black text-gray-900 dark:text-white tracking-widest pixel-font animate-pulse drop-shadow-lg">
+            PAUSE
           </div>
-        )}
+        </div>
+      )}
 
-        {/* GAME OVER */}
-        {status === GameStatus.GAME_OVER && (
-          <div className="absolute inset-0 z-30 bg-red-100/90 dark:bg-red-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center transition-colors duration-300">
-            <h2 className="text-3xl md:text-4xl font-bold text-red-600 dark:text-white mb-2 pixel-font drop-shadow-[0_0_10px_rgba(255,0,0,0.5)] whitespace-nowrap">GAME OVER</h2>
-            <div className="bg-white/60 dark:bg-black/40 p-6 rounded-xl mb-8 border border-red-200 dark:border-red-500/30 w-full max-w-[200px]">
-              <p className="text-red-800 dark:text-red-300 text-xs uppercase tracking-widest mb-1">Score</p>
-              <p className="text-4xl font-mono font-bold text-red-900 dark:text-white">{score}</p>
-            </div>
-            <button 
-              onClick={() => setStatus(GameStatus.IDLE)}
-              className="bg-white text-red-900 font-bold py-3 px-10 rounded-full text-lg shadow-xl hover:bg-gray-50 transition transform hover:scale-105 active:scale-95 border border-red-200"
-            >
-              MENU
-            </button>
+      {/* GAME OVER */}
+      {status === GameStatus.GAME_OVER && (
+        <div className="absolute inset-0 z-30 bg-red-100/90 dark:bg-red-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center transition-colors duration-300">
+          <h2 className="text-3xl md:text-4xl font-bold text-red-600 dark:text-white mb-2 pixel-font drop-shadow-[0_0_10px_rgba(255,0,0,0.5)] whitespace-nowrap">GAME OVER</h2>
+          <div className="bg-white/60 dark:bg-black/40 p-6 rounded-xl mb-8 border border-red-200 dark:border-red-500/30 w-full max-w-[200px]">
+            <p className="text-red-800 dark:text-red-300 text-xs uppercase tracking-widest mb-1">Score</p>
+            <p className="text-4xl font-mono font-bold text-red-900 dark:text-white">{score}</p>
           </div>
-        )}
-      </div>
+          <button 
+            onClick={() => setStatus(GameStatus.IDLE)}
+            className="bg-white text-red-900 font-bold py-3 px-10 rounded-full text-lg shadow-xl hover:bg-gray-50 transition transform hover:scale-105 active:scale-95 border border-red-200"
+          >
+            MENU
+          </button>
+        </div>
+      )}
 
       {/* Mobile Controls */}
       <div className="mt-6 grid grid-cols-3 gap-3 md:hidden w-full max-w-[280px]">
@@ -279,4 +283,4 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ user, onLogout, isDarkMode
       </div>
     </div>
   );
-}
+};
