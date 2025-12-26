@@ -228,35 +228,6 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ user, onLogout, isDarkMode
     </div>
   );
 };
-                      ? `${DIFFICULTY_CONFIG[diff].color} bg-gray-100 dark:bg-gray-900 shadow-lg` 
-                      : 'border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-white dark:hover:bg-gray-800'
-                  }`}
-                >
-                  <div className="font-bold text-sm relative z-10">{DIFFICULTY_CONFIG[diff].label}</div>
-                  <div className="text-[10px] opacity-70 group-hover:opacity-100 transition-opacity relative z-10">
-                    {DIFFICULTY_CONFIG[diff].desc}
-                  </div>
-                </button>
-              ))}
-            </div>
-            
-            <button 
-              onClick={startCountdown}
-              className="w-full max-w-xs bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl text-xl shadow-[0_0_30px_rgba(22,163,74,0.4)] transition-all hover:scale-105 active:scale-95"
-            >
-              JOGAR
-            </button>
-          </div>
-        )}
-
-        {/* COUNTDOWN */}
-        {status === GameStatus.COUNTDOWN && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/20 dark:bg-black/40">
-            <div className="text-8xl font-black text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] animate-bounce pixel-font">
-              {countdown}
-            </div>
-          </div>
-        )}
 
         {/* PAUSE */}
         {status === GameStatus.PLAYING && isPaused && (
