@@ -92,6 +92,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, isDarkMode, toggl
           >
             INICIAR SESSÃO
           </button>
+          <button
+            type="button"
+            className="w-full mt-2 py-3 rounded-xl font-bold text-base tracking-wide transition-all transform hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-[#53d22d] to-[#1e2b1a] hover:from-green-400 hover:to-emerald-500 text-white shadow-md border border-primary/40"
+            onClick={() => window.dispatchEvent(new CustomEvent('navigate-to-ranking'))}
+          >
+            RANKING
+          </button>
         </form>
 
         <div className="mt-6 text-center text-xs font-mono text-gray-400 dark:text-gray-600 opacity-75">
